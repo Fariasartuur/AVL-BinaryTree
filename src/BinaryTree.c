@@ -2,162 +2,148 @@
 #include <stdlib.h>
 #include <time.h>
 
-typedef struct NODE {
-  int data;
-  int depth;
-  int height;
-  struct NODE *left;
-  struct NODE *right;
-} NODE;
+typedef struct NODE{
+    int num;
+    struct NODE *left;
+    struct NODE *right;
+}NODE;
 
-NODE *create(int data) {
-  NODE *newnode = (NODE *)malloc(sizeof(NODE));
-  if (newnode != NULL) {
-    newnode->data = data;
-    newnode->depth = 0;
-    newnode->height = 0;
-    newnode->left = NULL;
-    newnode->right = NULL;
-    return newnode;
-  }
-  printf("Error inserting %d. There is no memory available.\n", data);
-  return NULL;
+NODE *create(int num){
+    NODE* newNode = (NODE*)malloc(sizeof(NODE));
+    newNode->num = num;
+    newNode->left = NULL;
+    newNode->right = NULL;
+
+    return newNode;
 }
 
-void updateDepthHeight(NODE* root, NODE* subTree){
-    if(subTree == NULL) return;
+NODE *insert(NODE *node, int num){
+    if(node == NULL) return create(num);
+    
+    if(num < node->num) 
+        node->left = insert(node->left, num);
+    else if(num > node->num) 
+        node->right = insert(node->right, num);
+    else 
+        return node;
 
-      subTree->depth = root->depth + 1;
-
-    if(root->height <= subTree->height)
-        root->height = subTree->height + 1;
+    return node;
 }
 
-NODE *insert(NODE *root, int num) {
-  if (root == NULL) {
-    return create(num);
-  }
-  if (num < root->data) {
-    root->left = insert(root->left, num);
-    updateDepthHeight(root, root->left);
-  } else {
-    root->right = insert(root->right, num);
-    updateDepthHeight(root, root->right);
-  }
-  return root;
-}
-
-NODE *createTree() {
-  int values[16];
-
-  for (int i = 0; i < 16; i++) {
-    values[i] = rand() % 50;
-  }
-
-  NODE *root = NULL;
-  for (int i = 0; i < 16; i++) {
-    root = insert(root, values[i]);
-  }
-  return root;
-}
-
-NODE *search(NODE *root, int num) {
-  if (root == NULL) {
-    return NULL;
-  }
-
-  if (root->data == num) {
-    return root;
-  }
-
-  if (num < root->data) {
-    return search(root->left, num);
-  } else {
-    return search(root->right, num);
-  }
-}
-
-NODE *findMinimum(NODE *root) {
-  while (root->left != NULL) {
-    root = root->left;
-  }
-  return root;
+NODE *findMin(NODE *node) {
+    while (node->left != NULL) node = node->left;
+    return node;
 }
 
 NODE *removeNo(NODE *root, int num) {
-  if (root == NULL) {
-    return NULL;
-  }
+    if (root == NULL) return NULL;
 
-  if (num < root->data) {
-    root->left = removeNo(root->left, num);
-  } else if (num > root->data) {
-    root->right = removeNo(root->right, num);
-  } else {
-    if (root->left == NULL && root->right == NULL) {
-      free(root);
-      return NULL;
-    }
-
-    else if (root->left == NULL) {
-      NODE *temp = root->right;
-      free(root);
-      return temp;
-    } else if (root->right == NULL) {
-      NODE *temp = root->left;
-      free(root);
-      return temp;
+    if (num < root->num) {
+        root->left = removeNo(root->left, num);
+    } else if (num > root->num) {
+        root->right = removeNo(root->right, num);
     } else {
-      NODE *MINIMUM_NODE = findMinimum(root->right);
-      root->data = MINIMUM_NODE->data;
-      root->right = removeNo(root->right, MINIMUM_NODE->data);
+        if (root->left == NULL) {
+            NODE *temp = root->right;
+            free(root);
+            return temp;
+        } else if (root->right == NULL) {
+            NODE *temp = root->left;
+            free(root);
+            return temp;
+        } else {
+            NODE *temp = findMin(root->right);
+            root->num = temp->num;
+            root->right = removeNo(root->right, temp->num);
+        }
     }
-  }
-  return root;
+    return root;
 }
 
-void inOrder(NODE *root) {
-  if (root == NULL) {
-    return;
-  }
+NODE *search(NODE *node, int num){
+    if (node == NULL) return NULL;
 
-  inOrder(root->left);
-  printf("%d ", root->data);
-  inOrder(root->right);
+    if(num == node->num) return node;
+
+    if(num < node->num)
+        return search(node->left, num);
+    else
+        return search(node->right, num);
+    
 }
 
-void preOrder(NODE *root) {
-  if (root == NULL) {
-    return;
-  }
+NODE *createTree(){
+    int values[16];
 
-  printf("%d ", root->data);
-  preOrder(root->left);
-  preOrder(root->right);
+    for(int i = 0; i < (sizeof(values)/sizeof(values[0])); i++){
+        values[i] = rand() % 50;
+    }
+
+    NODE* node = NULL;
+    for(int i = 0; i < (sizeof(values)/sizeof(values[0])); i++){
+        node = insert(node, values[i]);
+    }
+
+    return node;
 }
 
-void postOrder(NODE *root) {
-  if (root == NULL) {
-    return;
-  }
+void inOrder(NODE* node){
+    if(node == NULL) return;
 
-  postOrder(root->left);
-  postOrder(root->right);
-  printf("%d ", root->data);
+    inOrder(node->left);
+    printf("%d ", node->num);
+    inOrder(node->right);
 }
 
-int main() {
+void preOrder(NODE* node){
+    if(node == NULL) return;
 
-  srand(time(NULL));
+    printf("%d ", node->num);
+    preOrder(node->left);
+    preOrder(node->right);
+}
 
-  NODE *root = createTree();
+void postOrder(NODE* node){
+    if(node == NULL) return;
 
-  printf("InOrder\n");
-  inOrder(root);
-  printf("\n\nPreOrder\n");
-  preOrder(root);
-  printf("\n\nPostOrder\n");
-  postOrder(root);
+    postOrder(node->left);
+    postOrder(node->right);
+    printf("%d ", node->num);
+}
 
-  return 0;
+void printTree(NODE* tree){
+    printf("\nPrinting In Order\n");
+    inOrder(tree);
+    printf("\n\n");
+        
+    printf("Printing in Pre Order\n");
+    preOrder(tree);
+    printf("\n\n");
+
+    printf("Printing in Post Order\n");
+    postOrder(tree);
+    printf("\n\n");
+}
+
+int main(int argc, char const *argv[])
+{
+    srand(time(NULL));
+
+    NODE* tree = createTree();
+
+    int num = 2;
+
+    printTree(tree);
+
+    if(search(tree, num) != NULL){
+        printf("Number %d found.\n", num);
+        removeNo(tree, num);
+        printf("Number %d removed.\n", num);
+    } else{
+        printf("Number %d not found.\n", num);
+    }
+
+    printTree(tree);
+
+    return 0;
 }
